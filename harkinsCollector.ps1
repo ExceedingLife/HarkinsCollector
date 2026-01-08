@@ -50,7 +50,16 @@ $LogsToCollect = @(
     "Microsoft-Windows-AppLocker/EXE and DLL",
     "Microsoft-Windows-AppLocker/MSI and Script",
     "Microsoft-Windows-BitLocker/BitLocker Management",
-    "Microsoft-Windows-CodeIntegrity/Operational"
+    "Microsoft-Windows-CodeIntegrity/Operational",
+    "Microsoft-Windows-WMI-Activity/Operational",
+    "Microsoft-Windows-Bits-Client/Operational",
+    "Microsoft-Windows-WinRM/Operational",
+    "Microsoft-Windows-SMBClient/Connectivity",
+    "Microsoft-Windows-SMBServer/Operational",
+    "Microsoft-Windows-Kerberos/Operational",
+    "Microsoft-Windows-CAPI2/Operational",
+    "Microsoft-Windows-Security-Mitigations/KernelMode"
+
 )
 
 function Export-LogSafely {
