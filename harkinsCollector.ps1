@@ -23,7 +23,8 @@ Start-Sleep -Seconds 1
 
 $ComputerName = $env:COMPUTERNAME
 $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
-$BaseFolder = "C:\ForensicLogs\$ComputerName`_$CurrentDate"
+$FolderName = "$ComputerName`_$CurrentDate"
+$BaseFolder = "C:\ForensicLogs\$FolderName"
 
 if (!(Test-Path $BaseFolder)) {
     New-Item -ItemType Directory -Path $BaseFolder
@@ -51,15 +52,14 @@ $LogsToCollect = @(
     "Microsoft-Windows-AppLocker/MSI and Script",
     "Microsoft-Windows-BitLocker/BitLocker Management",
     "Microsoft-Windows-CodeIntegrity/Operational",
-    "Microsoft-Windows-WMI-Activity/Operational",
+    "Microsoft-Windows-WMI-Activity/Operational",         # WMI abuse, lateral movement
     "Microsoft-Windows-Bits-Client/Operational",
-    "Microsoft-Windows-WinRM/Operational",
+    "Microsoft-Windows-WinRM/Operational",                # Remote execution via WinRM  
     "Microsoft-Windows-SMBClient/Connectivity",
     "Microsoft-Windows-SMBServer/Operational",
     "Microsoft-Windows-Kerberos/Operational",
     "Microsoft-Windows-CAPI2/Operational",
     "Microsoft-Windows-Security-Mitigations/KernelMode"
-
 )
 
 function Export-LogSafely {
@@ -143,3 +143,28 @@ Note: Some logs may not be available depending on system configuration and permi
 Write-Host "`nCollection Complete!" -ForegroundColor Green
 Write-Host "Logs saved to: $BaseFolder" -ForegroundColor Cyan
 Write-Host "Remember to check CollectionSummary.txt for details about the collection." -ForegroundColor Yellow
+
+# -------------------------------------------------------
+# Compress the collected folder into ForensicLogs root
+# -------------------------------------------------------
+$ZipPath = "C:\ForensicLogs\$FolderName.zip"
+
+Write-Host "`n[*] Compressing $FolderName..." -ForegroundColor Cyan
+
+try {
+    Compress-Archive -Path $BaseFolder -DestinationPath $ZipPath -CompressionLevel Optimal -Force
+
+    if (Test-Path $ZipPath) {
+        $ZipSize = [math]::Round((Get-Item $ZipPath).Length / 1MB, 2)
+        Write-Host "[+] Compression complete: $ZipPath ($ZipSize MB)" -ForegroundColor Green
+
+        # Remove uncompressed folder, ForensicLogs root and zip remain intact
+        Remove-Item -Path $BaseFolder -Recurse -Force
+        Write-Host "[+] Uncompressed folder removed. Zip retained at C:\ForensicLogs\" -ForegroundColor Green
+    } else {
+        Write-Host "[-] Zip not found after compression - check manually at $ZipPath" -ForegroundColor Red
+    }
+} catch {
+    Write-Host "[-] Compression failed: $_" -ForegroundColor Red
+    Write-Host "[!] Uncompressed logs still available at $BaseFolder" -ForegroundColor Yellow
+}
